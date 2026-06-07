@@ -1,0 +1,5 @@
+# 大檔字型不進一般 git，建議用 Git LFS 或 Release 附件
+# 若已用 LFS 追蹤 *.otf，可移除下面這行
+# fonts/*.otf
+.DS_Store
+node_modules/
