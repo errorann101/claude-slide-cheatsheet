@@ -1,0 +1,354 @@
+---
+name: prompt-refiner
+description: 簡報提示詞優化器 + 演講者備忘稿生成器。當使用者貼上一段簡報需求草稿、說「幫我提示詞」、「幫我修提示詞」、「這樣寫精準嗎」、「這樣寫夠精準嗎」、「幫我優化這提示詞」、「幫我優化這段提示詞」、「提示詞你來寫」、「提示詞怎麼寫」、「配色建議」、「幫我選顏色」、「幫我選顔色」時，立即啟用此技能。當使用者上傳 .pptx 檔案並要求「撰寫演講稿」、「備忘稿」、「Speaker Notes」、「口語稿」、「演講備忘錄」、「講稿」、「幫我寫演講用的稿子」、「加上備忘稿讓我知道每張要說什麼」時，同樣立即啟用。輸出包含：(1) 精準化後的簡報提示詞，補上角色、範圍、產出、標記定義、風格與色碼五要素；(2) 推薦配色方案（附十六進位色碼與適用場合說明）；(3) 每次產出簡報檔，自動在備忘稿加上口說稿。即使使用者只說「幫我改一下這段」或「這樣可以嗎」，只要內容是簡報或投影片需求，就應觸發此技能。
+---
+
+# 簡報提示詞優化器 + 演講者備忘稿生成器
+
+本技能包含兩個模組，依使用者需求擇一或合併使用：
+
+| 模組 | 觸發情境 |
+|------|----------|
+| **A：提示詞優化器** | 使用者貼上簡報需求草稿，要求優化提示詞或配色建議 |
+| **B：演講者備忘稿** | 使用者上傳 .pptx，要求加入口語演講稿 / Speaker Notes |
+
+---
+
+## ── 模組 A：提示詞優化器 ──
+
+### Step A1：分析輸入草稿
+
+讀取使用者的草稿，判斷缺少哪些要素：
+
+| 要素 | 說明 | 若缺少 |
+|------|------|--------|
+| **角色** | AI 要扮演誰（分析師、研究員、講師…） | 根據主題推斷補入 |
+| **主題＋範圍** | 明確對象、時間、地區 | 詢問或從語境推斷 |
+| **產出** | 章節、表格、圖、頁數 | 補上標準結構 |
+| **標記定義** | 若有紅黃綠燈分級，每色代表什麼 | 若草稿有分級就必須補 |
+| **風格＋色碼** | 情緒形容詞＋十六進位色碼＋頁數 | 從配色表選推薦組合 |
+
+### Step A2：輸出精準化提示詞
+
+格式如下（用程式碼區塊包住，方便使用者複製）：
+
+```
+你是一位[角色]。
+
+[主題＋範圍說明]
+
+請製作一份[產出描述]，包含：
+- [章節1]
+- [章節2]
+- [章節3]
+
+視覺規格：
+版面 16:9，標題約 36pt、內文 16–20pt、最小字級不低於 12pt
+中文字型：微軟正黑體（或思源黑體）
+主色 [色碼]、輔色 [色碼]、背景白 #FFFFFF、內文深灰 #2A2A2A
+頁尾名牌：[使用者名稱或品牌]
+
+輸出：可下載的 PPTX，共 [N] 頁。
+```
+
+### Step A3：推薦配色方案
+
+根據主題情緒，從下表挑 2–3 組推薦，並說明為何適合：
+
+| 名稱 | 主色 · 輔色 · 點綴 | 適合場合 |
+|------|--------------------|----------|
+| 深夜行政藍 | `#1E2761` · `#CADCFC` | 商務、財經、董事會、嚴謹權威 |
+| 森林與苔蘚 | `#2C5F2D` · `#97BC62` | 環保、自然、永續、綠能 |
+| 珊瑚活力 | `#F96167` · `#F9E795` · `#2F3C7E` | 活力、年輕、生活、行銷 |
+| 暖陶土 | `#B85042` · `#A7BBAE` | 文化、旅遊、復古、人文 |
+| 海洋漸層 | `#065A82` · `#1C7293` · `#21295C` | 科技、知識、科普、教育 |
+| 炭灰極簡 | `#36454F` · `#212121` | 極簡、攝影、雜誌、設計感 |
+| 青藍信任 | `#028090` · `#00A896` · `#02C39A` | 醫療、信任感、金融科技、ESG |
+| 莓果奶油 | `#6D214E` · `#A26769` · `#ECE2D0` | 美食、女性向、生活時尚 |
+| 鼠尾草療癒 | `#84B59F` · `#69A297` · `#50808E` | 療癒、心理、冥想、健康空間 |
+| 強烈櫻桃 | `#990011` · `#2F3C7E` | 強力奪目、運動、促銷、發表會 |
+
+背景一律白 `#FFFFFF`、內文深灰 `#2A2A2A`。
+
+### Step A4：輸出格式規範
+
+1. 先簡短說明草稿缺了什麼（1–3 句）
+2. 輸出精準化提示詞（程式碼區塊）
+3. 推薦 2–3 組配色，每組說明「為何適合這個主題」
+4. 結尾提示：可直接把上面提示詞貼給 Claude 製作 PPTX
+
+### 預設風格
+
+- 字型：微軟正黑體
+- 主色：`#F05A1A`（橘）
+- 輔色：`#1E2761`（深藍）
+- 頁尾名牌：`自己的名字`
+- 背景：白底
+- 風格關鍵字：專業、清晰、教學感
+
+---
+
+## ── 模組 B：演講者備忘稿生成器 ──
+
+為每張投影片讀取視覺內容，撰寫口語化、客製化演講稿，並嵌入 PowerPoint 備忘稿欄位。
+
+### 快速參考
+
+| 步驟 | 動作 |
+|------|------|
+| B1 | 讀取 PPTX 技能說明 |
+| B2 | 轉換投影片為圖片，視覺讀取每張內容 |
+| B3 | 撰寫每張備忘稿 |
+| B4 | 建立 notesSlides XML 結構並嵌入 |
+| B5 | 重新打包輸出 |
+
+### 前置需求
+
+讀取 PPTX 核心技能：
+```bash
+view /mnt/skills/public/pptx/SKILL.md
+```
+
+### Step B1：解包與視覺化
+
+```bash
+cp /mnt/user-data/uploads/<filename>.pptx /home/claude/presentation.pptx
+python /mnt/skills/public/pptx/scripts/office/unpack.py /home/claude/presentation.pptx /home/claude/unpacked/
+python /mnt/skills/public/pptx/scripts/office/soffice.py --headless --convert-to pdf /home/claude/presentation.pptx
+pdftoppm -jpeg -r 120 /home/claude/presentation.pdf /home/claude/slide
+```
+
+用 `view` 工具逐張讀取每張投影片圖片（`slide-01.jpg`、`slide-02.jpg`…），
+完整辨識投影片上的所有文字、圖示、標題、子項目、視覺架構。
+
+### Step B2：撰寫演講備忘稿
+
+**備忘稿風格原則**
+
+- **口語化**：如同真人站在台前對觀眾說話，而非照本宣科
+- **結構清晰**：每段有主旨→展開→收尾的邏輯
+- **段落分隔**：用空行分段，每段 2–4 句，讓講者視線掃描順暢
+- **長度適中**：每張約 200–400 字（依內容複雜度調整）
+- **客製化**：緊扣投影片上的具體內容，不寫通用廢話
+- **銜接感**：每張備忘稿末尾可自然帶入下一張的橋接語
+
+**備忘稿結構模板**
+
+```
+[開場句：引出這張投影片的核心問題或情境]
+
+[主體段 1：展開第一個重點，加入具體例子或數據]
+
+[主體段 2：第二個重點，或呼應視覺圖示的說明]
+
+（視需要加入第三段）
+
+[收尾句：總結這張要點，或自然過渡到下一張]
+```
+
+### Step B3：嵌入備忘稿 XML
+
+**建立目錄結構**
+
+```bash
+mkdir -p /home/claude/unpacked/ppt/notesSlides/_rels
+mkdir -p /home/claude/unpacked/ppt/notesMasters/_rels
+```
+
+**每張 notesSlide XML 模板**（`notesSlide{N}.xml`）：
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<p:notes xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+         xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+         xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name=""/>
+        <p:cNvGrpSpPr/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0"/>
+          <a:ext cx="0" cy="0"/>
+          <a:chOff x="0" y="0"/>
+          <a:chExt cx="0" cy="0"/>
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="2" name="Slide Image Placeholder 1"/>
+          <p:cNvSpPr><a:spLocks noGrp="1" noRot="1" noChangeAspect="1"/></p:cNvSpPr>
+          <p:nvPr><p:ph type="sldImg"/></p:nvPr>
+        </p:nvSpPr>
+        <p:spPr/>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="3" name="Notes Placeholder 2"/>
+          <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
+          <p:nvPr><p:ph type="body" idx="1"/></p:nvPr>
+        </p:nvSpPr>
+        <p:spPr/>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle/>
+          <!-- 每個段落一個 <a:p> 元素 -->
+          <a:p>
+            <a:r>
+              <a:rPr lang="zh-TW" sz="1400" dirty="0"/>
+              <a:t>段落文字內容</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:endParaRPr lang="zh-TW" sz="1400" dirty="0"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping/>
+  </p:clrMapOvr>
+</p:notes>
+```
+
+> **重要**：每個段落（空行分隔）需獨立為一個 `<a:p>` 元素，段落之間加入空白 `<a:p>` 以保留視覺間距。
+
+**每張 notesSlide 的 .rels 檔案**
+
+路徑：`/home/claude/unpacked/ppt/notesSlides/_rels/notesSlide{N}.xml.rels`
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Target="../slides/slide{N}.xml"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide"/>
+  <Relationship Id="rId2" Target="../notesMasters/notesMaster1.xml"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster"/>
+</Relationships>
+```
+
+**每張 slide 的 .rels 需加入 notes 連結**
+
+在 `/home/claude/unpacked/ppt/slides/_rels/slide{N}.xml.rels` 的 `</Relationships>` 前加入：
+
+```xml
+<Relationship Id="rId{N+1}" Target="../notesSlides/notesSlide{N}.xml"
+  Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide"/>
+```
+
+（`rId` 編號需高於現有最大編號，避免衝突。）
+
+### Step B4：建立 notesMaster
+
+若 `notesMasters/` 不存在，建立最簡版：
+
+**`notesMasters/notesMaster1.xml`**：
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<p:notesMaster xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+               xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+               xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name=""/>
+        <p:cNvGrpSpPr/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/>
+          <a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/>
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="2" name="Slide Image Placeholder 1"/>
+          <p:cNvSpPr><a:spLocks noGrp="1" noRot="1" noChangeAspect="1"/></p:cNvSpPr>
+          <p:nvPr><p:ph type="sldImg"/></p:nvPr>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="685800" y="1143000"/>
+            <a:ext cx="5181600" cy="3886200"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="3" name="Notes Placeholder 2"/>
+          <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
+          <p:nvPr><p:ph type="body" idx="1"/></p:nvPr>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="685800" y="5143500"/>
+            <a:ext cx="8229600" cy="3886200"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle>
+            <a:lvl1pPr><a:defRPr lang="zh-TW" sz="1200"/></a:lvl1pPr>
+          </a:lstStyle>
+          <a:p><a:endParaRPr lang="zh-TW" sz="1200" dirty="0"/></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2"
+    accent1="accent1" accent2="accent2" accent3="accent3"
+    accent4="accent4" accent5="accent5" accent6="accent6"
+    hlink="hlink" folHlink="folHlink"/>
+</p:notesMaster>
+```
+
+**`notesMasters/_rels/notesMaster1.xml.rels`**：
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Target="../theme/theme1.xml"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"/>
+</Relationships>
+```
+
+### Step B5：更新 Content_Types.xml 與 presentation.xml.rels
+
+**Content_Types.xml**（在 `</Types>` 前加入）：
+
+```xml
+<Override ContentType="application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"
+  PartName="/ppt/notesSlides/notesSlide{N}.xml"/>
+<!-- 每張投影片各一行 -->
+<Override ContentType="application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml"
+  PartName="/ppt/notesMasters/notesMaster1.xml"/>
+```
+
+**presentation.xml.rels**（在 `</Relationships>` 前加入）：
+
+```xml
+<Relationship Id="rId{next_id}" Target="notesMasters/notesMaster1.xml"
+  Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster"/>
+```
+
+### Step B6：打包輸出
+
+```bash
+python /mnt/skills/public/pptx/scripts/office/pack.py \
+  /home/claude/unpacked/ \
+  /mnt/user-data/outputs/<原始檔名>_含演講稿備忘錄.pptx \
+  --original /home/claude/presentation.pptx
+```
+
+使用 `present_files` 工具提供下載連結。
+
+### 常見注意事項
+
+- **XML 特殊字元**：備忘稿文字中的 `&`、`<`、`>` 需轉義為 `&amp;`、`&lt;`、`&gt;`
+- **rId 衝突**：加入新關係前先確認現有最大 rId 編號
+- **段落分隔**：每個視覺段落對應一個 `<a:p>`，段落間用空的 `<a:p>` 隔開
+- **語系標記**：中文備忘稿使用 `lang="zh-TW"`，英文混排時對應段落用 `lang="en-US"`
+- **驗證打包**：`pack.py` 若回傳 `All validations PASSED!` 即代表結構完整
